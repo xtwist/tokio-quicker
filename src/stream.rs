@@ -89,8 +89,11 @@ impl AsyncWrite for QuicStreamWriter {
     }
 
     fn poll_shutdown(self: Pin<&mut Self>, _: &mut Context<'_>) -> Poll<io::Result<()>> {
-        // Implement if needed
-        Poll::Ready(Ok(()))
+        let message = Message::Close(self.id);
+        match self.tx.send(message) {
+            Ok(_) => Poll::Ready(Ok(())),
+            Err(err) => Poll::Ready(Err(io::Error::new(io::ErrorKind::BrokenPipe, err))),
+        }
     }
 }
 
